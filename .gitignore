@@ -1,3 +1,6 @@
+# my ignores
+app/index_and_data/bge-small-en
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,43 @@
+# Ignore Python cache files and directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment directories
+venv/
+.env/
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore development tools and files
+.idea/
+.vscode/
+*.swp
+
+# Ignore version control directories
+.git/
+.gitignore
+
+# Ignore Docker-related files (optional)
+docker-compose.yml
+
+# Ignore build artifacts
+dist/
+build/
+*.egg-info/
+
+# Ignore temporary files
+*.bak
+*.tmp
+*.swp
+
+# Ignore database and migrations (if not required in the image)
+db.sqlite3
+migrations/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db

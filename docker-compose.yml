@@ -1,0 +1,58 @@
+# docker-compose.yml
+version: '3'
+services:
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+    environment:
+      - DATABASE_HOSTNAME=${DATABASE_HOSTNAME}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - BASE_URL=${BASE_URL}
+      - TOKEN=${TOKEN}
+      - MODEL_NAME=${MODEL_NAME}
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"  
+    environment:
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_USER=${DATABASE_USERNAME}
+      - POSTGRES_DB=${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  streamlit:
+    build:
+      context: ./streamlit
+    depends_on:
+      - api
+    ports:
+      - "8501:8501"  # Streamlit's default port
+    volumes:
+      - ./streamlit:/app  # Assuming your Streamlit app files are in a 'streamlit_app' subdirectory
+    environment:
+      - FASTAPI_URL=http://api:8000  # Crucial: Use the service name 'api' as the hostname
+    command: streamlit run /app/main.py # Assuming your main Streamlit script is named 'main.py'
+
+
+volumes:
+  postgres_data:
