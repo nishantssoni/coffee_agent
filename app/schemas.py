@@ -10,10 +10,15 @@ class Chat(BaseModel):
 class PromptRequest(BaseModel):
     prompt: str
 
-class ChatHistory(BaseModel):
+class ChatResponse(BaseModel):
     role: str
     content: str
 
+class ChatHistory(BaseModel):
+    role: str
+    content: str
+    memory: dict
+    
 
 # users
 

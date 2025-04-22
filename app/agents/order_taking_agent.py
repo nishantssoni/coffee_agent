@@ -79,21 +79,23 @@ class OrderTakingAgent:
 
         last_order_taking_status = ""
         asked_recommendation_before = False
+        message = None
         for message_index in range(len(messages)-1,0,-1):
-            message = messages[message_index]
+            current_message = messages[message_index]
             
-            agent_name = message.get("memory",{}).get("agent","")
-            if message["role"] == "assistant" and agent_name == "order_taking_agent":
-                step_number = message["memory"]["step_number"]
-                order = message["memory"]["order"]
-                asked_recommendation_before = message["memory"]["asked_recommendation_before"]
+            if current_message["role"] == "assistant" and "memory" in current_message and current_message["memory"].get("agent", "") == "order_taking_agent":
+                step_number = current_message["memory"]["step_number"]
+                order = current_message["memory"]["order"]
+                asked_recommendation_before = current_message["memory"]["asked_recommendation_before"]
                 last_order_taking_status = f"""
                 step_number: {step_number}
                 order: {order}
                 """
+                message = current_message
                 break
-
-        messages[-1]['content'] = last_order_taking_status + " \n "+ messages[-1]['content']
+        
+        if message is None:    
+            messages[-1]['content'] = last_order_taking_status + " \n "+ messages[-1]['content']
 
         input_messages = [{"role": "system", "content": system_prompt}] + messages        
 

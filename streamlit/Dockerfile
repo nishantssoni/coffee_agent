@@ -12,7 +12,7 @@ RUN echo "streamlit==1.32.0\nrequests==2.31.0" > requirements.txt
 RUN pip install -r requirements.txt
 
 # Copy the entire Streamlit app directory into the container
-# COPY ./streamlit_app .
+COPY . .
 
 # Expose the Streamlit port (default is 8501)
 EXPOSE 8501

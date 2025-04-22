@@ -37,25 +37,25 @@ router = APIRouter(
     tags=["chats"],
 )
 
-@router.post("/ask", status_code=status.HTTP_201_CREATED, response_model=schemas.ChatHistory)
+@router.post("/ask", status_code=status.HTTP_201_CREATED, response_model=schemas.ChatResponse)
 async def ask_model( data: schemas.PromptRequest,db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     
     # save the user prompt in the db
     db_chat = models.Chats(
                     user_id=current_user.id,
                     role="user",
-                    content=data.prompt
+                    content=data.prompt,
+                    memory={},
                 )
     db.add(db_chat)
     db.commit()
     db.refresh(db_chat)
 
-    # fetch the last three messages
+    # fetch the previous messages
     last_chats = (
         db.query(models.Chats)
         .filter(models.Chats.user_id == current_user.id)
         .order_by(desc(models.Chats.created_at))
-        .limit(3)
         .all()
     )
 

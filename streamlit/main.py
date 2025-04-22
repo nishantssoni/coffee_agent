@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import os
-
+import json
 
 # Debugging information
 # st.write("Debugging Information:")
@@ -13,8 +13,7 @@ import os
 # Force the URL to use the service name instead of relying on environment variable
 # --- Configuration ---
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")  # Replace with your FastAPI URL
-st.write(f"Using API URL: {FASTAPI_URL}")
-
+# st.write(f"Using API URL: {FASTAPI_URL}")
 
 
 # --- State Management ---
@@ -26,6 +25,8 @@ if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
     st.session_state['username'] = None
+if 'last_order' not in st.session_state:
+    st.session_state['last_order'] = None
 
 # --- Authentication Functions ---
 def login(username, password):
@@ -40,6 +41,7 @@ def login(username, password):
         st.success("Logged in successfully!")
         load_chat_history()
         st.rerun()
+        load_chat_history()
         return True
     except requests.exceptions.RequestException as e:
         st.error(f"Login failed: {e}")
@@ -83,14 +85,34 @@ def load_chat_history():
             response = requests.get(f"{FASTAPI_URL}/chats/history", headers=headers)
             response.raise_for_status()
             history_data = response.json()
+            # st.write("DEBUG: history_data", history_data)
+            # Store last order in session state
+            st.session_state['last_order'] = get_last_order_from_memory(history_data)
+            # st.write("DEBUG: last_order", st.session_state['last_order'])
+
             st.session_state['chat_history'] = [{"role": chat["role"], "content": chat["content"]} for chat in history_data]
+        
         except requests.exceptions.RequestException as e:
             st.error(f"Failed to load chat history: {e}")
         except requests.exceptions.HTTPError as e:
             st.error(f"Failed to load chat history: {response.json().get('detail', 'Something went wrong')}")
 
-# --- UI ---
-st.title("Chat App with JWT Authentication")
+def get_last_order_from_memory(data):
+    """Extract the most recent non-empty order from chat memory field."""
+    for message in reversed(data):
+        memory = message.get("memory", {})
+        if (
+            isinstance(memory, dict)
+            and memory.get("agent") == "order_taking_agent"
+            and memory.get("order")  # Ensures order exists and is not empty
+        ):
+            return memory["order"]
+    return []
+
+
+
+# --- UI --
+st.title("order coffee from bot")
 
 if not st.session_state['logged_in']:
     with st.form("login_form"):
@@ -102,7 +124,15 @@ if not st.session_state['logged_in']:
 else:
     with st.sidebar:
         st.write(f"Logged in as: {st.session_state['username']}")
-        if st.button("Logout"):
+        
+        if st.session_state.get("last_order"):
+            st.sidebar.markdown("### 🛒 Last Order")
+            for item in st.session_state["last_order"]:
+                st.sidebar.write(f"{item['quantity']}x {item['item']} ({item['price']})")
+        else:
+            st.sidebar.info("No recent orders found.")
+
+        if st.button("Logout "):
             logout()
 
     st.subheader("Chat History")
@@ -121,4 +151,6 @@ else:
                 response = get_chat_response(prompt)
             if response:
                 st.markdown(response)
-                st.session_state['chat_history'].append({"role": "assistant", "content": response})
+                load_chat_history()
+                st.rerun()
+                # st.session_state['chat_history'].append({"role": "assistant", "content": response})
