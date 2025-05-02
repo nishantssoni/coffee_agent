@@ -2,6 +2,7 @@
 
 **LLM-powered multi-agent coffee shop assistant** built with FastAPI backend, Streamlit frontend, and local LLM (via Ollama). This system supports user interaction, coffee ordering, menu exploration, and smart recommendations — all through conversational chat.
 
+![Screenshot](images/vid.gif)
 ---
 
 
@@ -94,9 +95,9 @@ git clone https://github.com/nishantssoni/coffee_agent.git
 
 # Step 3: Navigate into the project directory
 cd coffee_agent
-
+# NOTE: add .env in coffee_agent/ path
 # Step 4: Run the containers
-docker-compose up
+docker compose up
 ```
 
 ---
@@ -142,9 +143,32 @@ docker-compose up
 ---
 
 ## 📸 Screenshots
-![Screenshot](ui_demo.png)
-![Screenshot](working_demo.png)
+
+#### Login and Registration
+![Screenshot](images/login.png)
+
+#### Gaurd Agent
+![Screenshot](images/gaurd.png)
+
+#### Details Agent
+![Screenshot](images/details.png)
+
+#### Popular recommendations
+![Screenshot](images/recommendation.png)
+
+#### recommendations base on product
+![Screenshot](images/based_suggestion.png)
+
+#### Product cart
+![Screenshot](images/orders.png)
+
 ---
+- `classification_agent.py` – Determines the user's intent (order, ask for details, etc.).
+- `details_agent.py` – Provides detailed product information like ingredients or origin.
+- `guard_agent.py` – Validates requests and filters inappropriate inputs.
+- `order_taking_agent.py` – Handles item selection, customization, and order placement.
+- `recommendation_agent.py`
+
 
 ## 🛠️ Further Development
 
