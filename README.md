@@ -42,6 +42,9 @@
 - 🛡️ **Input Moderation & Validation**  
   All user queries are filtered and validated using `guard_agent.py` to ensure a safe, appropriate chat environment.
 
+- 🔗 **RAG-Based Answering (Retrieval-Augmented Generation)**  
+  The `details_agent.py` implements RAG by retrieving relevant product data from FAISS vector indexes and passing it to the LLM to generate contextually accurate answers.
+
 - 📦 **Embedded Knowledge Base**  
   Uses FAISS indices (`faiss_product.index`, `bge_vector_store.index`) for fast, contextual product retrieval.
 
@@ -99,7 +102,7 @@ docker-compose up
 ---
 
 ## 📁 File Structure
-
+```plaintext
 ├── app
 │   ├── agents                  # Modular LLM agents
 │   │   ├── classification_agent.py
@@ -134,7 +137,7 @@ docker-compose up
 ├── docker-compose.yml          # Defines multi-container setup
 ├── Dockerfile                  # FastAPI container setup
 ├── .env.example                # Sample environment file
-
+```
 
 ---
 
