@@ -146,6 +146,59 @@ docker-compose up
 ![Screenshot](working_demo.png)
 ---
 
+## 🛠️ Further Development
+
+- 🧾 **Order Memory Extraction for Analytics or UI Display**  
+  The `order_taking_agent.py` saves structured JSON responses with reasoning, step tracking, and itemized order summaries in the memory column in database. Example log output:
+
+  ```json
+  {
+    "chain of thought": "The user has already ordered a Latte, so I will validate the new order. The user wants to order two more Lattes.",
+    "step_number": 3,
+    "order": [
+      {"item": "Cappuccino", "quantity": 1, "price": "$4.50"},
+      {"item": "Ginger Scone", "quantity": 1, "price": "$3.50"},
+      {"item": "Latte", "quantity": 1, "price": "$4.75"},
+      {"item": "Cappuccino", "quantity": 2, "price": "$9.00"}
+    ],
+    "response": "You have ordered a Cappuccino ($4.50), Ginger Scone ($3.50), Latte ($4.75), and two Cappuccinos ($9.00). Is there anything else you'd like to add?"
+  }
+  ```
+
+- 🔄 **Access Chat History via API**  
+  Call the following endpoint to retrieve all chat messages including embedded `memory`:
+
+  ```
+  GET /chats/history
+  ```
+
+  This is useful for pulling order data, reviewing interactions, or debugging multi-step conversations.
+
+- 🧠 **Extract Last Order with `get_last_order_from_memory()`**  
+  In the Streamlit frontend (`streamlit/main.py`), this helper function is available to extract the latest non-empty order from chat memory:
+
+  ```python
+  def get_last_order_from_memory(data):
+      """Extract the most recent non-empty order from chat memory field."""
+      for message in reversed(data):
+          memory = message.get("memory", {})
+          if (
+              isinstance(memory, dict)
+              and memory.get("agent") == "order_taking_agent"
+              and memory.get("order")  # Ensures order exists and is not empty
+          ):
+              return memory["order"]
+      return []
+  ```
+
+  - `data` is the list of chat messages (JSON) returned from `/chats/history`.
+  - This function can be used to:
+    - Show a live summary of the user’s current order
+    - Enable "repeat last order" functionality
+    - Integrate real-time receipt generation
+
+
+
 ## 🤝 Contribution
 Contributions are welcome! Feel free to open issues or submit pull requests for suggestions, improvements, or bug fixes.
 
