@@ -3,18 +3,8 @@ import requests
 import os
 import json
 
-# Debugging information
-# st.write("Debugging Information:")
-# st.write(f"FASTAPI_URL environment variable: {os.getenv('FASTAPI_URL')}")
-# st.write(f"Current working directory: {os.getcwd()}")
-# st.write(f"List of environment variables: {dict(os.environ)}")
-
-# --- Configuration ---
-# Force the URL to use the service name instead of relying on environment variable
 # --- Configuration ---
 FASTAPI_URL = os.getenv("FASTAPI_URL", "http://api:8000")  # Replace with your FastAPI URL
-# st.write(f"Using API URL: {FASTAPI_URL}")
-
 
 # --- State Management ---
 if 'jwt_token' not in st.session_state:
@@ -27,6 +17,8 @@ if 'username' not in st.session_state:
     st.session_state['username'] = None
 if 'last_order' not in st.session_state:
     st.session_state['last_order'] = None
+if 'show_register' not in st.session_state:
+    st.session_state['show_register'] = False
 
 # --- Authentication Functions ---
 def login(username, password):
@@ -50,6 +42,35 @@ def login(username, password):
         st.error(f"Login failed: {response.json().get('detail', 'Invalid credentials')}")
         return False
     
+def register_user(username, email, password):
+    register_data = {
+        "username": username,
+        "email": email,
+        "password": password
+    }
+    try:
+        response = requests.post(f"{FASTAPI_URL}/users/", json=register_data)
+        response.raise_for_status()
+        st.success("Registration successful! You can now log in.")
+        st.session_state['show_register'] = False
+        return True
+    except requests.exceptions.HTTPError as e:
+        error_detail = "Registration failed"
+        try:
+            error_json = response.json()
+            if 'detail' in error_json:
+                error_detail = error_json['detail']
+        except:
+            pass
+        st.error(f"{error_detail}")
+        return False
+    except requests.exceptions.RequestException as e:
+        st.error(f"Registration failed: {e}")
+        return False
+
+def toggle_register_form():
+    st.session_state['show_register'] = not st.session_state['show_register']
+    st.rerun()
 
 def logout():
     st.session_state['jwt_token'] = None
@@ -85,11 +106,8 @@ def load_chat_history():
             response = requests.get(f"{FASTAPI_URL}/chats/history", headers=headers)
             response.raise_for_status()
             history_data = response.json()
-            # st.write("DEBUG: history_data", history_data)
             # Store last order in session state
             st.session_state['last_order'] = get_last_order_from_memory(history_data)
-            # st.write("DEBUG: last_order", st.session_state['last_order'])
-
             st.session_state['chat_history'] = [{"role": chat["role"], "content": chat["content"]} for chat in history_data]
         
         except requests.exceptions.RequestException as e:
@@ -109,18 +127,53 @@ def get_last_order_from_memory(data):
             return memory["order"]
     return []
 
-
-
 # --- UI --
-st.title("order coffee from bot")
+st.title("Order Coffee from Bot")
 
 if not st.session_state['logged_in']:
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
-        if submitted:
-            login(username, password)
+    if st.session_state['show_register']:
+        with st.form("register_form"):
+            st.subheader("Create New Account")
+            new_username = st.text_input("Username")
+            new_email = st.text_input("Email")
+            new_password = st.text_input("Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                back_button = st.form_submit_button("Back to Login")
+            with col2:
+                register_button = st.form_submit_button("Register")
+            
+            if register_button:
+                if new_password != confirm_password:
+                    st.error("Passwords don't match!")
+                elif not new_username or not new_email or not new_password:
+                    st.error("All fields are required")
+                else:
+                    register_user(new_username, new_email, new_password)
+            
+            if back_button:
+                st.session_state['show_register'] = False
+                st.rerun()
+    else:
+        with st.form("login_form"):
+            st.subheader("Login")
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                submitted = st.form_submit_button("Login")
+            with col2:
+                register_link = st.form_submit_button("Create Account")
+            
+            if submitted and username and password:
+                login(username, password)
+                
+            if register_link:
+                st.session_state['show_register'] = True
+                st.rerun()
 else:
     with st.sidebar:
         st.write(f"Logged in as: {st.session_state['username']}")
@@ -132,7 +185,7 @@ else:
         else:
             st.sidebar.info("No recent orders found.")
 
-        if st.button("Logout "):
+        if st.button("Logout"):
             logout()
 
     st.subheader("Chat History")
@@ -153,4 +206,3 @@ else:
                 st.markdown(response)
                 load_chat_history()
                 st.rerun()
-                # st.session_state['chat_history'].append({"role": "assistant", "content": response})
