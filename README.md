@@ -163,11 +163,6 @@ docker compose up
 ![Screenshot](images/orders.png)
 
 ---
-- `classification_agent.py` – Determines the user's intent (order, ask for details, etc.).
-- `details_agent.py` – Provides detailed product information like ingredients or origin.
-- `guard_agent.py` – Validates requests and filters inappropriate inputs.
-- `order_taking_agent.py` – Handles item selection, customization, and order placement.
-- `recommendation_agent.py`
 
 
 ## 🛠️ Further Development
